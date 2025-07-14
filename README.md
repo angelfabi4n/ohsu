@@ -1,2 +1,2 @@
-# ohsu
+# OHSU Repository
 First repository @ Github
