@@ -1,3 +1,4 @@
 # ohsu
-First repository @ Github
-Hello, my name is Angel Alvarado and im a Senior at UPRM
+¿Pero cómo quieres que me vaya bien
+Si tú no me sacas de los close friend'?
+Mm-mm, mm-mm, mm-mm, mm-mm
