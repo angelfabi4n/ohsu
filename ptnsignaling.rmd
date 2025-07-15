@@ -1,0 +1,119 @@
+---
+title: "Investigating Pleiotrophin (PTN) Signaling in the Tumor Microenvironment of Breast Cancer"
+author: "Angel F. Alvarado Velez"
+date: "2025-07-15"
+output: html_document
+---
+
+## What is Pleiotrophin?
+
+This project explores the role of **pleiotrophin*** (PTN), a heparin-binding growth factor, in the tumor microenvironment (TME) of breast cancer. PTN has been implicated in promoting tumor growth, angiogenesis, and metastasis, yet its signaling dynamics and transcriptional impact remain incompletely understood.
+
+## Objectives
+
+This project aims to investigate the influence of **pleiotrophin** on tumor development, specifically focusing on its expression and activity within the TME. Using two experimental datasets derived from CT3-tagged mouse models, we will analyze how PTN expression correlates with changes in cellular behavior and tumor progression. By addressing this, our study has the potential to bring new insights into the functional role of PTN in breast cancer and to the development of therapeutic targets. (like PTN/NRP-1 interaction)
+
+## Linna Procedure
+
+1. **Import Libraries**
+
+```{r, message=FALSE}
+library(limma)
+library(tidyverse)
+```
+
+
+2. **Put path to input file here**
+
+```{r}
+inputFile <- "csv-dataset/GSE200431_all_dep_ctrl_noNA.csv"
+```
+
+3. **Import log2CPM data into R**
+
+```{r}
+log2CPM_matrix <- read.csv(inputFile)  
+```
+
+4. **Create data.matrix from log2CPM_matrix, with gene symbols as rownames**
+
+```{r}
+log2CPM_matrix <-                     
+  log2CPM_matrix %>%
+  distinct(symbol, .keep_all = TRUE) %>%
+  column_to_rownames("symbol") %>%
+  dplyr::select(-X) %>%
+  as.matrix()
+```
+
+5. **Create a vector of sample names & use brackets to subset samples to analyze**
+
+```{r}
+whichSamples <- colnames(log2CPM_matrix)
+whichSamples <- whichSamples[-c(1:12, 19:24)]  
+```
+
+6. **Extract treatment names from group names**
+
+```{r}
+group <- str_remove((str_extract(whichSamples, "[_][A-Za-z]+")), "_")
+group <- as.factor(group) 
+```
+
+7. **Create design matrix for linear model**
+
+```{r, results='hide'}
+design <- model.matrix(~ 0 + group)
+colnames(design) <- levels(group)
+design
+```
+
+8. **Fit linear model to log2CPM data**
+
+```{r}
+fit <- lmFit(log2CPM_matrix[, whichSamples], design)
+```
+
+9. **Define contrast(s)**
+
+```{r}
+contrast.matrix <- makeContrasts(CntrlvsSH= plko - shPTN,levels=design)
+fit2 <- contrasts.fit(fit, contrast.matrix)
+fit2 <- eBayes(fit2)
+```
+
+10. **Extract results**
+
+```{r, results='hide'}
+topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
+```
+
+11. **Create new file**
+
+```{r}
+cooltable <- topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
+```
+
+12. **Filter tale to select genes with adjusted p-value < 0.5 & log2 fold change > 1 or < -1**
+
+```{r}
+library(dplyr)
+coolfilteredgenes <- cooltable %>%
+  filter(adj.P.Val < 0.5 & (logFC > 1 | logFC < -1))
+```
+
+13. **Write table to CSV file**
+
+```{r}
+write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
+```
+
+```{r, echo=FALSE}
+coolfilteredgenes
+```
+
+
+
+
+
+
