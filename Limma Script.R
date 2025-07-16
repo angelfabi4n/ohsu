@@ -89,7 +89,7 @@ top50_genes_filtered <- coolfilteredgenes %>%
           show_row_names = TRUE,
           width = unit(14, "cm"),  
           height = unit(14, "cm"),
-          name = "Top 50 Differentially Expressed Genes")
+          name = "Top 50 Differentially\nExpressed Genes")
   
       
 
