@@ -83,18 +83,13 @@ top50_genes_filtered <- coolfilteredgenes %>%
   log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE))
   
 # Create Heatmap & Legend
-  heatmap(log2CPM_top50_centered,
-          col = colorRampPalette(c("blue", "white", "red"))(256),   
-          Rowv = TRUE,              
-          cexCol = 0.8)
+  Heatmap(log2CPM_top50_centered,
+          col = colorRampPalette(c("blue", "white", "red"))(256),  # Custom color palette (blue-white-red)
+          show_column_names = TRUE,  # Show column names (samples)
+          show_row_names = TRUE,
+          width = unit(14, "cm"),  
+          height = unit(14, "cm"),
+          name = "Top 50 Differentially Expressed Genes")
   
-  mtext("Top 50 Differentially Expressed Genes", 
-        side = 3,        # Position the title at the top (side = 3)
-        line = 1,    # Move the title lower; adjust the number to your liking
-        cex = 1.5)
-  
-  legend("topleft",
-         legend = seq(0, 1, length.out = 5),
-         fill = colorRampPalette(c("blue", "white", "red"))(256),
-         title = "Expression Level")
+      
 
