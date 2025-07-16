@@ -1,5 +1,5 @@
 ---
-title: "Investigating effecr of tumor stromal content on Pleiotrophin (PTN) Signaling in mouse models of Triple Negative Breast Cancer"
+title: "Investigating effects of tumor stromal content on Pleiotrophin (PTN) signaling in mouse models of Triple Negative Breast Cancer"
 author: "Angel F. Alvarado Velez"
 date: "2025-07-16"
 output: html_document
@@ -17,7 +17,7 @@ This project aims to investigate the influence of **pleiotrophin** on tumor deve
 
 <br><br>
 
-## Linna Procedure with GSE Dataset
+## a. Linna Procedure with GSE Dataset
 
 <br><br>
 
@@ -115,8 +115,54 @@ write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
 
 <br><br>
 
-## Fltered PTN Genes Table
+## b. Fltered PTN Genes Table
+
+<br><br>
 
 ```{r, echo=FALSE}
 DT::datatable(coolfilteredgenes, options = list(pageLength = 10))
 ```
+
+<br><br>
+
+## c. Heatmap
+
+<br><br>
+
+1. **Dowload Packages**
+
+```{r, message=FALSE, warning=FALSE}
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
+library(dplyr)
+```
+
+2. **Filter list of DE genes to 50 of largest log2FC w adj. P-value < 0.05**
+```{r}
+top50_genes <- coolfilteredgenes %>%
+  filter(adj.P.Val < 0.05) %>%
+  arrange(desc(abs(logFC))) %>%
+  slice(1:50)
+```
+
+3. **Scaling the Data**
+```{r}
+log2CPM_top50_scaled <- t(scale(t(top50_genes)))
+```
+
+4. **Creating the heatmap**
+
+```{r}
+heatmap(log2CPM_top50_scaled,
+        scale = "none",           
+        col = heat.colors(256),   
+        main = "Top 50 DE Genes",
+        Rowv = TRUE,            
+        Colv = TRUE)            
+```
+
+
+
+
+
+
