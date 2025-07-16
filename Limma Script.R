@@ -61,17 +61,40 @@ write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
 ## Fltered PTN Genes Table
 DT::datatable(coolfilteredgenes, options = list(pageLength = 10))
 
-# Filter list of DE genes to 50 of largest log2FC w adj. P-value < 0.05
-top50_genes <- coolfilteredgenes %>%
-  filter(adj.P.Val < 0.05) %>%
-  arrange(desc(abs(logFC))) %>%
-  slice(1:50)
-
 # Dowload pakages 
 install.packages("BiocManager")
 BiocManager::install("ComplexHeatmap")
 library(ComplexHeatmap)
 library(dplyr)
 
+# Remove columns 1-12 and 19-25
+log2CPM_matrix_filtered <- log2CPM_matrix[, -c(1:12, 19:25)]
 
+# Filter top 50 genes (based on absolute logFC and adj.P.Val < 0.05)
+top50_genes_filtered <- coolfilteredgenes %>%
+  filter(adj.P.Val < 0.05) %>%
+  arrange(desc(abs(logFC))) %>%
+  slice(1:50)
+
+# Subset the log2CPM matrix for the top 50 genes
+  log2CPM_top50 <- log2CPM_matrix_filtered[rownames(log2CPM_matrix_filtered) %in% rownames(top50_genes_filtered), ]
+
+# Mean centering the rows of the expression matrix(Log2CPM values)
+  log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE))
+  
+# Create Heatmap & Legend
+  heatmap(log2CPM_top50_centered,
+          col = colorRampPalette(c("blue", "white", "red"))(256),   
+          Rowv = TRUE,              
+          cexCol = 0.8)
+  
+  mtext("Top 50 Differentially Expressed Genes", 
+        side = 3,        # Position the title at the top (side = 3)
+        line = 1,    # Move the title lower; adjust the number to your liking
+        cex = 1.5)
+  
+  legend("topleft",
+         legend = seq(0, 1, length.out = 5),
+         fill = colorRampPalette(c("blue", "white", "red"))(256),
+         title = "Expression Level")
 
