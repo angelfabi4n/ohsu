@@ -171,7 +171,7 @@ log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE
           show_row_names = TRUE,
           width = unit(8, "cm"),  
           height = unit(8, "cm"),
-          name = "Top 50 Differentially Expressed Genes")
+          name = "Top 50 Differentially\nExpressed Genes")
           
 ```
 
