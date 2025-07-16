@@ -7,7 +7,7 @@ output: html_document
 
 ## What is Pleiotrophin?
 
-This project explores the role of **pleiotrophin*** (PTN), a heparin-binding growth factor, in the tumor microenvironment (TME) of breast cancer. PTN has been implicated in promoting tumor growth, angiogenesis, and metastasis, yet its signaling dynamics and transcriptional impact remain incompletely understood.
+This project explores the role of **pleiotrophin**\* (PTN), a heparin-binding growth factor, in the tumor microenvironment (TME) of breast cancer. PTN has been implicated in promoting tumor growth, angiogenesis, and metastasis, yet its signaling dynamics and transcriptional impact remain incompletely understood.
 
 ## Objectives
 
@@ -15,27 +15,26 @@ This project aims to investigate the influence of **pleiotrophin** on tumor deve
 
 ## Linna Procedure
 
-1. **Import Libraries**
+1.  **Import Libraries**
 
 ```{r, message=FALSE}
 library(limma)
 library(tidyverse)
 ```
 
-
-2. **Put path to input file here**
+2.  **Put path to input file here**
 
 ```{r}
-inputFile <- "csv-dataset/GSE200431_all_dep_ctrl_noNA.csv"
+inputFile <- "GSE200431_all_dep_ctrl_noNA.csv"
 ```
 
-3. **Import log2CPM data into R**
+3.  **Import log2CPM data into R**
 
 ```{r}
 log2CPM_matrix <- read.csv(inputFile)  
 ```
 
-4. **Create data.matrix from log2CPM_matrix, with gene symbols as rownames**
+4.  **Create data.matrix from log2CPM_matrix, with gene symbols as rownames**
 
 ```{r}
 log2CPM_matrix <-                     
@@ -46,21 +45,21 @@ log2CPM_matrix <-
   as.matrix()
 ```
 
-5. **Create a vector of sample names & use brackets to subset samples to analyze**
+5.  **Create a vector of sample names & use brackets to subset samples to analyze**
 
 ```{r}
 whichSamples <- colnames(log2CPM_matrix)
 whichSamples <- whichSamples[-c(1:12, 19:24)]  
 ```
 
-6. **Extract treatment names from group names**
+6.  **Extract treatment names from group names**
 
 ```{r}
 group <- str_remove((str_extract(whichSamples, "[_][A-Za-z]+")), "_")
 group <- as.factor(group) 
 ```
 
-7. **Create design matrix for linear model**
+7.  **Create design matrix for linear model**
 
 ```{r, results='hide'}
 design <- model.matrix(~ 0 + group)
@@ -68,13 +67,13 @@ colnames(design) <- levels(group)
 design
 ```
 
-8. **Fit linear model to log2CPM data**
+8.  **Fit linear model to log2CPM data**
 
 ```{r}
 fit <- lmFit(log2CPM_matrix[, whichSamples], design)
 ```
 
-9. **Define contrast(s)**
+9.  **Define contrast(s)**
 
 ```{r}
 contrast.matrix <- makeContrasts(CntrlvsSH= plko - shPTN,levels=design)
@@ -94,7 +93,7 @@ topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
 cooltable <- topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
 ```
 
-12. **Filter tale to select genes with adjusted p-value < 0.5 & log2 fold change > 1 or < -1**
+12. **Filter tale to select genes with adjusted p-value \< 0.5 & log2 fold change \> 1 or \< -1**
 
 ```{r}
 library(dplyr)
@@ -108,12 +107,8 @@ coolfilteredgenes <- cooltable %>%
 write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
 ```
 
+
+
 ```{r, echo=FALSE}
 coolfilteredgenes
 ```
-
-
-
-
-
-
