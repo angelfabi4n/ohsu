@@ -2,7 +2,7 @@ library(limma)
 library(tidyverse)
 
 ########################################### Put path to input file here
-inputFile <- "csv-dataset/GSE200431_all_dep_ctrl_noNA.csv"
+inputFile <- "GSE200431_all_dep_ctrl_noNA.csv"
 ###########################################
 
 # Import log2CPM data into R
@@ -57,4 +57,7 @@ coolfilteredgenes <- cooltable %>%
 
 # Write table to CSV file
 write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
+
+## Fltered PTN Genes Table
+DT::datatable(coolfilteredgenes, options = list(pageLength = 10))
 
