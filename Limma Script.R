@@ -45,10 +45,10 @@ fit2 <- contrasts.fit(fit, contrast.matrix)
 fit2 <- eBayes(fit2)
 
 # Extract results
-topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
+topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 200)
 
 # Create new file
-cooltable <- topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 20)
+cooltable <- topTable(fit2, coef="CntrlvsSH", lfc = 0, number = 200)
 
 # Filter tale to select genes with adjusted p-value < 0.5 & log2 fold change > 1 or < -1
 library(dplyr)
@@ -60,4 +60,27 @@ write.csv(coolfilteredgenes, "GSEFiltered_PTN_Signature.csv", row.names = FALSE)
 
 ## Fltered PTN Genes Table
 DT::datatable(coolfilteredgenes, options = list(pageLength = 10))
+
+# Filter list of DE genes to 50 of largest log2FC w adj. P-value < 0.05
+top50_genes <- coolfilteredgenes %>%
+  filter(adj.P.Val < 0.05) %>%
+  arrange(desc(abs(logFC))) %>%
+  slice(1:50)
+
+# Dowload pakages 
+install.packages("BiocManager")
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
+library(dplyr)
+
+# Scale by row, so expression is centered per gene
+log2CPM_top50_scaled <- t(scale(t(top50_genes)))
+
+# Create heatmap
+heatmap(log2CPM_top50_scaled,
+        scale = "none",  
+        col = heat.colors(256),   # change to your preferred color palette
+        main = "Top 50 Differentially Expressed Genes",
+        Rowv = TRUE,              # cluster genes (rows)
+        Colv = TRUE)              # cluster samples (columns)
 
