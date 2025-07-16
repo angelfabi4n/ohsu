@@ -73,14 +73,5 @@ BiocManager::install("ComplexHeatmap")
 library(ComplexHeatmap)
 library(dplyr)
 
-# Scale by row, so expression is centered per gene
-log2CPM_top50_scaled <- t(scale(t(top50_genes)))
 
-# Create heatmap
-heatmap(log2CPM_top50_scaled,
-        scale = "none",  
-        col = heat.colors(256),   # change to your preferred color palette
-        main = "Top 50 Differentially Expressed Genes",
-        Rowv = TRUE,              # cluster genes (rows)
-        Colv = TRUE)              # cluster samples (columns)
 

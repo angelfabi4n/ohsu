@@ -125,7 +125,7 @@ DT::datatable(coolfilteredgenes, options = list(pageLength = 10))
 
 <br><br>
 
-## c. Heatmap
+## c. Heatmap showing 50 genes with largest DE between conditions
 
 <br><br>
 
@@ -137,28 +137,49 @@ library(ComplexHeatmap)
 library(dplyr)
 ```
 
-2. **Filter list of DE genes to 50 of largest log2FC w adj. P-value < 0.05**
+2. **Delete columns of log2CPM Matrix, only having the 6 relevant columns**
+
 ```{r}
-top50_genes <- coolfilteredgenes %>%
+log2CPM_matrix_filtered <- log2CPM_matrix[, -c(1:12, 19:25)]
+```
+
+2. **Filter list of DE genes to 50 of largest log2FC with adj. P-value < 0.05**
+```{r}
+top50_genes_filtered <- coolfilteredgenes %>%
   filter(adj.P.Val < 0.05) %>%
   arrange(desc(abs(logFC))) %>%
   slice(1:50)
 ```
 
-3. **Scaling the Data**
+3. **Subset the Data, selecting a specific portion of the data that meet the particular requirements**
 ```{r}
-log2CPM_top50_scaled <- t(scale(t(top50_genes)))
+log2CPM_top50 <- log2CPM_matrix_filtered[rownames(log2CPM_matrix_filtered) %in% rownames(top50_genes_filtered), ]
 ```
 
-4. **Creating the heatmap**
+4. **Mean centering the data, substracting the mean expression from each row. Making it easier to identify**
 
 ```{r}
-heatmap(log2CPM_top50_scaled,
-        scale = "none",           
-        col = heat.colors(256),   
-        main = "Top 50 DE Genes",
-        Rowv = TRUE,            
-        Colv = TRUE)            
+log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE))
+```
+
+5. **Creating the heatmap**
+
+```{r}
+heatmap(log2CPM_top50_centered,
+          col = colorRampPalette(c("blue", "white", "red"))(256),   
+          Rowv = TRUE,              
+          cexCol = 0.8)
+  
+  mtext("Top 50 Differentially Expressed Genes", 
+        side = 3,        # Position the title at the top (side = 3)
+        line = 1,    # Move the title lower; adjust the number to your liking
+        cex = 1.5)
+  
+  legend("topleft",
+         legend = seq(0, 1, length.out = 5),
+         fill = colorRampPalette(c("blue", "white", "red"))(256),
+         title = "Expression Level")
+          
 ```
 
 
