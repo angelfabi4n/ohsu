@@ -165,13 +165,13 @@ log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE
 5. **Creating the heatmap**
 
 ```{r}
-  Heatmap(log2CPM_top50_centered,
-          col = colorRampPalette(c("blue", "white", "red"))(256), 
-          show_column_names = TRUE,  
-          show_row_names = TRUE,
-          width = unit(8, "cm"),  
-          height = unit(8, "cm"),
-          name = "Top 50 Differentially\nExpressed Genes")
+Heatmap(log2CPM_top50_centered,
+        col = colorRampPalette(c("blue", "white", "red"))(256),  # Custom color palette (blue-white-red)
+        show_column_names = TRUE,  # Show column names (samples)
+        show_row_names = TRUE,
+        width = unit(8, "cm"),  
+        height = unit(8, "cm"),
+        name = "Top 50 Differentially\nExpressed Genes")
           
 ```
 

@@ -113,10 +113,13 @@ Heatmap(mat_pos,
         height = unit(14, "cm"),
         name = "Top 50\n(log2FC > 0)")
 
-# Insert Libraries
+##################################################################
+#Friday-July 18
 
+# Insert Libraries
 library(Seurat)
 library(ggplot2)
+library(dplyr)
 
 # Create DotPlot for GSE postive genes celltypes
 DotPlot(seuratObj, features   = posvalid_genes, group.by   = "celltype") +
@@ -133,8 +136,6 @@ DotPlot(seuratObj,features   = pos_genes, group.by   = "stromalClass") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1),
 axis.title.x = element_blank()) + ggtitle("Expression of Positive‐FC Genes by Stromal Content")
 
-
-
 # Create UMAP for +FC stromal content, & label each UMAP plot with the gene name
 FeaturePlot(seuratObj, features  = pos_genes, reduction = "umap", 
 ncol      = 3, pt.size   = 0.3) &
@@ -144,8 +145,6 @@ plot_list <- lapply(posvalid_genes, function(gene)
 
 # Arrange all the plots in a grid
 gridExtra::grid.arrange(grobs = plot_list, ncol = 3)  # Adjust ncol as needed
-
-
 
 # Create 5 groups for -FC stromal content
 gp1 <- neg_genes[1:9]
@@ -162,3 +161,84 @@ plot_list <- lapply(gp5, function(gene)
 
 # Arrange all the plots in a grid
 gridExtra::grid.arrange(grobs = plot_list, ncol = 3)
+
+##############################################################################################
+#Monday-July 21
+
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+
+# Extract metadata and gene expression values
+df1 <- FetchData(
+  object = seuratObj,
+  vars   = c("celltype", "stromalClass", pos_genes),
+  slot   = "data")
+
+df2 <- FetchData(
+  object = seuratObj,
+  vars   = c("celltype", "stromalClass", neg_genes),
+  slot   = "data")
+
+# Reshape to longer format
+pl1 <- pivot_longer(data = df1, cols = -c(celltype, stromalClass), names_to = "genes", values_to = "expression")
+pl2 <- pivot_longer(data = df2, cols = -c(celltype, stromalClass), names_to = "genes", values_to = "expression")
+
+# Create binary expression variable
+pl1 <- pl1 %>% mutate(expressed = expression > 0)
+pl2 <- pl2 %>% mutate(expressed = expression > 0)
+
+# Add ptn status
+pl1 <- pl1 %>% mutate(ptn_status = "control")
+pl2 <- pl2 %>% mutate(ptn_status = "knockdown")
+
+# Group and summarize expression percentages
+percent_expr1 <- pl1 %>%
+group_by(celltype, ptn_status, genes) %>%         
+summarize(
+    n_cells        = n(),                           
+    n_expressed    = sum(expressed),                
+    pct_expressed  = mean(expressed) * 100,         
+    .groups        = "drop")
+
+percent_expr2 <- pl2 %>%
+  group_by(celltype, ptn_status, genes) %>%         
+  summarize(
+    n_cells        = n(),                           
+    n_expressed    = sum(expressed),                
+    pct_expressed  = mean(expressed) * 100,         
+    .groups        = "drop")
+
+# Filter to genes expressed in =>2% of cells
+percent_expr_filtered1 <- percent_expr1 %>%
+  filter(pct_expressed >= 2)
+
+percent_expr_filtered2 <- percent_expr2 %>%
+  filter(pct_expressed >= 2)
+
+# Summarize the number of expressed genes per cell type
+ptn_gene_counts1 <- percent_expr_filtered1 %>%
+  group_by(celltype, ptn_status) %>%
+  summarize(
+  n_genes = n(),              
+  .groups = "drop")
+
+ptn_gene_counts2 <- percent_expr_filtered2 %>%
+  group_by(celltype, ptn_status) %>%
+  summarize(
+    n_genes = n(),              
+    .groups = "drop")
+
+# Percentages of number of genes in cell types
+ptn_gene_counts1 <- ptn_gene_counts1 %>%
+  mutate(
+    pct_genes = n_genes / case_when(
+      ptn_status == "control"   ~ 9,
+    ) * 100)
+
+ptn_gene_counts2 <- ptn_gene_counts2 %>%
+  mutate(
+    pct_genes = n_genes / case_when(
+      ptn_status == "knockdown"   ~ 41,
+    ) * 100)
