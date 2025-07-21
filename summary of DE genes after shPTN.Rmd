@@ -1,0 +1,161 @@
+---
+title: "Summary of C3(1)TAg Cell Types expression on DE genes after shPTN"
+author: "Angel F. Alvarado Velez"
+date: "2025-07-21"
+output: html_document
+---
+
+<br>
+
+## Objective?
+
+The Objective of this R Markdown file is to summarie wich C3(1)TAg cell type express genes that are DE after shPTN, using Seurat and Tidyverse functions. Consider a gene to be expressed in a given cell type if its detected in at least **2% of cells**. Two different summaries will be created for genes upregulated and down regulated after shPTN. This means that genes that are down regulated in shPTN are up regulated in PTN, providing us valuable informaion.
+
+<br>
+
+**1. Insert Libraries**
+
+```{r, message=FALSE}
+library(Seurat)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+```
+
+```{r, echo=FALSE}
+seuratObj <- readRDS("seuratObj.rds")
+CntrlvsSH <- load("CntrlvsSH.RData")
+```
+
+**2. Extract metadata and gene expression values**
+
+```{r, warning=FALSE}
+df1 <- FetchData(
+  object = seuratObj,
+  vars   = c("celltype", "stromalClass", pos_genes),
+  slot   = "data")
+
+df2 <- FetchData(
+  object = seuratObj,
+  vars   = c("celltype", "stromalClass", neg_genes),
+  slot   = "data")
+```
+
+**3. Reshape to longer format**
+```{r}
+pl1 <- pivot_longer(data = df1, cols = -c(celltype, stromalClass), names_to = "genes", values_to = "expression")
+pl2 <- pivot_longer(data = df2, cols = -c(celltype, stromalClass), names_to = "genes", values_to = "expression")
+```
+
+**4. Create binary expression variable**
+```{r}
+pl1 <- pl1 %>% mutate(expressed = expression > 0)
+pl2 <- pl2 %>% mutate(expressed = expression > 0)
+```
+
+**5. Add ptn status**
+```{r}
+pl1 <- pl1 %>% mutate(ptn_status = "control")
+pl2 <- pl2 %>% mutate(ptn_status = "knockdown")
+```
+
+
+**6. Group and summarize expression percentages**
+```{r}
+percent_expr1 <- pl1 %>%
+group_by(celltype, ptn_status, genes) %>%         
+summarize(
+    n_cells        = n(),                           
+    n_expressed    = sum(expressed),                
+    pct_expressed  = mean(expressed) * 100,         
+    .groups        = "drop")
+
+percent_expr2 <- pl2 %>%
+  group_by(celltype, ptn_status, genes) %>%         
+  summarize(
+    n_cells        = n(),                           
+    n_expressed    = sum(expressed),                
+    pct_expressed  = mean(expressed) * 100,         
+    .groups        = "drop")
+```
+
+**7. Filter to genes expressed in =>2% of cells**
+```{r}
+percent_expr_filtered1 <- percent_expr1 %>%
+  filter(pct_expressed >= 2)
+
+percent_expr_filtered2 <- percent_expr2 %>%
+  filter(pct_expressed >= 2)
+```
+
+**8. Summarize the number of expressed genes per cell type**
+```{r}
+ptn_gene_counts1 <- percent_expr_filtered1 %>%
+  group_by(celltype, ptn_status) %>%
+  summarize(
+  n_genes = n(),              
+  .groups = "drop")
+
+ptn_gene_counts2 <- percent_expr_filtered2 %>%
+  group_by(celltype, ptn_status) %>%
+  summarize(
+    n_genes = n(),              
+    .groups = "drop")
+```
+
+**9. Percentages of number of genes in cell types**
+```{r}
+ptn_gene_counts1 <- ptn_gene_counts1 %>%
+  mutate(
+    pct_genes = n_genes / case_when(
+      ptn_status == "control"   ~ 9,
+    ) * 100)
+
+ptn_gene_counts2 <- ptn_gene_counts2 %>%
+  mutate(
+    pct_genes = n_genes / case_when(
+      ptn_status == "knockdown"   ~ 41,
+    ) * 100)
+```
+
+<br><br>
+
+## Summary of expressed genes per cell type on PTN
+
+<br>
+
+```{r, echo=FALSE}
+library(formattable)
+
+formattable(
+  ptn_gene_counts1,
+  list(
+    n_genes    = color_tile("#f7fbff", "skyblue"),
+    pct_genes  = color_bar("skyblue")
+  )
+)
+```
+
+<br>
+
+## Summary of expressed genes per cell type on shPTN
+
+<br>
+
+```{r, echo=FALSE}
+
+formattable(
+  ptn_gene_counts2,
+  list(
+    n_genes    = color_tile("#f7fbff", "skyblue"),
+    pct_genes  = color_bar("skyblue")
+  )
+)
+```
+
+
+
+
+
+
+

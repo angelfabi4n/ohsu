@@ -13,7 +13,7 @@ seuratObj <- FindVariableFeatures(seuratObj)
 seuratObj <- ScaleData(seuratObj)
 seuratObj <- RunUMAP(seuratObj, dims = 1:10)
 
-# Both UMAP & PCA simplify complex data by reducing the number of variables while retaining important information
+# Both UMAP & PCA simplify complex drm(ata by reducing the number of variables while retaining important information
 
 # Create UMAP plot side-by-side with annotations for stromalClass and celltype
 DimPlot(seuratObj, reduction = "umap", group.by = "stromalClass") + 
