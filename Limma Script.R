@@ -77,19 +77,88 @@ top50_genes_filtered <- coolfilteredgenes %>%
   slice(1:50)
 
 # Subset the log2CPM matrix for the top 50 genes
-  log2CPM_top50 <- log2CPM_matrix_filtered[rownames(log2CPM_matrix_filtered) %in% rownames(top50_genes_filtered), ]
+log2CPM_top50 <- log2CPM_matrix_filtered[rownames(log2CPM_matrix_filtered) %in% rownames(top50_genes_filtered), ]
 
 # Mean centering the rows of the expression matrix(Log2CPM values)
-  log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE))
-  
-# Create Heatmap & Legend
-  Heatmap(log2CPM_top50_centered,
-          col = colorRampPalette(c("blue", "white", "red"))(256),  # Custom color palette (blue-white-red)
-          show_column_names = TRUE,  # Show column names (samples)
-          show_row_names = TRUE,
-          width = unit(14, "cm"),  
-          height = unit(14, "cm"),
-          name = "Top 50 Differentially\nExpressed Genes")
-  
-      
+log2CPM_top50_centered <- t(scale(t(log2CPM_top50), center = TRUE, scale = FALSE))
 
+# Create Heatmap & Legend
+Heatmap(log2CPM_top50_centered,
+        col = colorRampPalette(c("blue", "white", "red"))(256),  # Custom color palette (blue-white-red)
+        show_column_names = TRUE,  # Show column names (samples)
+        show_row_names = TRUE,
+        width = unit(14, "cm"),  
+        height = unit(14, "cm"),
+        name = "Top 50 Differentially\nExpressed Genes")
+
+# Separate the posotive‐FC and negative‐FC gene lists
+pos_genes <- rownames(top50_genes_filtered)[ top50_genes_filtered$logFC > 0 ]
+neg_genes <- rownames(top50_genes_filtered)[ top50_genes_filtered$logFC < 0 ]
+      
+mat_pos <- log2CPM_top50_centered[ pos_genes, ]
+mat_neg <- log2CPM_top50_centered[ neg_genes, ]
+
+library(circlize)
+
+# Create Heatmap for - and + values of the log2FC 
+Heatmap(mat_neg,
+        col = colorRamp2(c(-5, 0, 5), c("blue", "white", "red")),
+        name = "Top 50\n(log2FC < 0)",
+        width = unit(14, "cm"),  
+        height = unit(14, "cm"))
+      
+Heatmap(mat_pos,
+        col = colorRamp2(c(-3, 0, 3), c("blue", "white", "red")),
+        width = unit(14, "cm"),  
+        height = unit(14, "cm"),
+        name = "Top 50\n(log2FC > 0)")
+
+# Insert Libraries
+
+library(Seurat)
+library(ggplot2)
+
+# Create DotPlot for GSE postive genes celltypes
+DotPlot(seuratObj, features   = posvalid_genes, group.by   = "celltype") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1),
+axis.title.x = element_blank()) + ggtitle("Expression of Positive‐FC Genes by Cell Type")
+
+# Create DotPlot for GSE negative genes celltypes
+DotPlot(seuratObj, features   = neg_genes, group.by   = "celltype") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1),
+axis.title.x = element_blank()) + ggtitle("Expression of Negative‐FC Genes by Cell Type")
+  
+# Create DotPlot for GSE positive genes stromal content
+DotPlot(seuratObj,features   = pos_genes, group.by   = "stromalClass") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1),
+axis.title.x = element_blank()) + ggtitle("Expression of Positive‐FC Genes by Stromal Content")
+
+
+
+# Create UMAP for +FC stromal content, & label each UMAP plot with the gene name
+FeaturePlot(seuratObj, features  = pos_genes, reduction = "umap", 
+ncol      = 3, pt.size   = 0.3) &
+ggtitle("Expression of +FC genes")
+plot_list <- lapply(posvalid_genes, function(gene) 
+{FeaturePlot(seuratObj, features = gene, reduction = "umap", pt.size = 0.3) + ggtitle(gene)})
+
+# Arrange all the plots in a grid
+gridExtra::grid.arrange(grobs = plot_list, ncol = 3)  # Adjust ncol as needed
+
+
+
+# Create 5 groups for -FC stromal content
+gp1 <- neg_genes[1:9]
+gp2 <- neg_genes[10:18]
+gp3 <- neg_genes[19:27]
+gp4 <- neg_genes[28:36]
+gp5 <- neg_genes[38:41]
+
+#gp1-5 umap
+FeaturePlot(seuratObj, features  = gp5, reduction = "umap", ncol = 3, pt.size   = 0.3) &
+ggtitle("Expression of +FC genes")
+plot_list <- lapply(gp5, function(gene) 
+{FeaturePlot(seuratObj, features = gene, reduction = "umap", pt.size = 0.3) + ggtitle(gene)})
+
+# Arrange all the plots in a grid
+gridExtra::grid.arrange(grobs = plot_list, ncol = 3)
